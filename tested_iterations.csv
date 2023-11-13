@@ -1,6 +1,0 @@
-dataset path,target column,outliers,scaler,dropped columns.unnecessary,dropped columns.correlation,missing values.Gender,missing values.Income_(USD),missing values.Income_Stability,missing values.Type_of_Employment,missing values.Current_Loan_Expenses_(USD),missing values.Dependents,missing values.Credit_Score,missing values.Has_Active_Credit_Card,missing values.Property_Age,missing values.Property_Location,skewness.positive,skewness.negative,base_model,base_r2,hyperparameter tuning,best_model,best_r2
-./dataset/train.csv,Loan_Sanction_Amount_(USD),remove,StandardScaler(),"['Customer_ID', 'Name']","['Property_Price', 'Current_Loan_Expenses_(USD)']",delete_rows,delete_rows,delete_rows,delete_rows,delete_rows,delete_rows,delete_rows,delete_rows,delete_rows,delete_rows,sqrt,sq,DecisionTreeRegressor(),-1.75,"GridSearchCV(cv=RepeatedKFold(n_repeats=3, n_splits=10, random_state=1),
-             estimator=DecisionTreeRegressor(), n_jobs=-1,
-             param_grid={'criterion': ['squared_error', 'poisson'],
-                         'max_depth': [5, 10, 11, 12, 15, 20]},
-             scoring=make_scorer(r2_score))","DecisionTreeRegressor(criterion='poisson', max_depth=10)",-2.6612878807923845
