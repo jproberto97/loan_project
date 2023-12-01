@@ -210,7 +210,7 @@ def single_predict():
         'Credit Score': [credit_score],
         'No. of Defaults': [0 if num_of_defaults == "None" else 1],
         'Has Active Credit Card': [has_credit_card],
-        'Property Age': [property_age*365.25],
+        'Property Age': [property_age],
         'Property Type': [prop_type[property_type] if property_type in prop_type else None],
         'Property Location': [property_location],
         'Co-Applicant': [0 if co_applicant == "None" else 1],

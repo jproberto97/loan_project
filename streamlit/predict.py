@@ -43,10 +43,15 @@ def predict_new(values_dict):
        [25242.82]], dtype=float32)
     """
 
+    column_label_dictionary = {'Monthly Income ($)':'Income (USD)', 'Work Location':'Location', 'Loan Amount Requested($)':'Loan Amount Request (USD)', 'Current Loan Expenses($)':'Current Loan Expenses (USD)', 'Expense Type 1(include Loan Payments and Insurance)':'Expense Type 1', 'Expense Type 2(include Travel and Subscription Services)':'Expense Type 2', 'Number of dependents':'Dependents', ' History of defaults':'No. of Defaults', 'Credit Card Status':'Has Active Credit Card', 'Property Age(in Years)':'Property Age', 'Number of Co-applicants':'Co-Applicant', 'Property Price($)':'Property Price'}
+    
     bank_loan_df = pd.DataFrame.from_dict(values_dict)
+    bank_loan_df.rename(columns=column_label_dictionary, inplace=True)
+
     bank_loan_df.columns = bank_loan_df.columns.str.replace(' ', '_') 
     unnecessary_columns = ['Customer_ID', 'Name']
     bank_loan_df.drop(unnecessary_columns, axis=1, inplace=True)
+    bank_loan_df['Property_Age'] = bank_loan_df['Property_Age'] * 365.25
 
     ohe_df = pd.get_dummies(bank_loan_df, dtype=int)
 
