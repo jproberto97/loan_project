@@ -6,3 +6,4 @@ DeepLearningTestsPau.ipynb
 tested_architectures.txt
 test_app.ipynb
 upload_example.csv
+predict.py
