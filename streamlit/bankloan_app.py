@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 from predict import predict_new
+import base64
 
 # load the model from disk
 import joblib
@@ -42,8 +43,6 @@ def set_background():
 
 
 
-
-
 def single_predict():
     set_background()
     st.title("Bank Loan Amount Prediction App - Single Predict")
@@ -60,8 +59,8 @@ def single_predict():
     location = st.selectbox("Work Location", ("Urban", "Semi-Urban", "Rural"), index=None, key="location", help="Select Work location...")
     loan_amount_request = st.number_input('Loan Amount Requested ($)', min_value=0.00, value=None, placeholder="Input Loan Amount Requested...")  
     current_loan_expenses = st.number_input('Current Loan Expense ($)', min_value=0.00, value=None, placeholder="Input Current Loan Expense...")
-    expense_t1 = st.selectbox("Expense Type 1 (include Loan Payments and Insurance)", ("Yes", "None"), index=None, key="expense_t1", help="Applicant Has Type 1 Expenses?") 
-    expense_t2 = st.selectbox("Expense Type 2 (include Travel and Leisure, Subscription Services)", ("Yes", "None"), index=None, key="expense_t2", help="Applicant Has Type 2 Expenses?") 
+    expense_t1 = st.selectbox("Expense Type 1 (include Other Loan Payments)", ("Yes", "None"), index=None, key="expense_t1", help="Applicant Has Type 1 Expenses?") 
+    expense_t2 = st.selectbox("Expense Type 2 (include Insurance)", ("Yes", "None"), index=None, key="expense_t2", help="Applicant Has Type 2 Expenses?") 
     dependents = st.number_input('Number of dependents', min_value=0, value=None, placeholder="Input Number of dependents...")
     credit_score = st.number_input('Credit Score', min_value=0, value=None, placeholder="Input Credit Score...")
     num_of_defaults = st.selectbox("History of defaults", ("Yes", "None"), index=None, key="num_of_defaults", help="History of defaults") 
@@ -92,7 +91,7 @@ def single_predict():
                 'Expense_Type_2': [expense_t2], 
                 'Dependents': [dependents], 
                 'Credit_Score': [credit_score],
-                'No._of_Defaults': [0 if num_of_defaults == "None" else 1], 
+                'History_of_Defaults': [num_of_defaults], 
                 'Has_Active_Credit_Card': [has_credit_card],
                 'Property_Age': [property_age], 
                 'Property_Type': [prop_type[property_type] if property_type in prop_type else None], 
@@ -103,8 +102,6 @@ def single_predict():
 
     st.markdown("<h3>Overview of input:</h3>", unsafe_allow_html=True)
     st.dataframe(features_df)
-
-
 
 
 
@@ -153,18 +150,14 @@ def single_predict():
         if property_location== None:
             missing_fields.append("Property Location")
         if co_applicant== None:
-            missing_fields.append("Number of Co-applicants")
+            missing_fields.append("Presence of Co-applicants")
         if property_price == None:
             missing_fields.append("Property Price")
             
         if missing_fields:
             st.error(f"Please fill in the following fields: {', '.join(missing_fields)}")         
 
-        # else:
-        # Display the overview of input
 
-        # if st.button('Predict'):
-            # st.dataframe(features_df)
         features_df = pd.DataFrame.from_dict({
                 'Customer_ID': [customer_id], 
                 'Name': [name], 
@@ -181,7 +174,7 @@ def single_predict():
                 'Expense_Type_2': [expense_t2], 
                 'Dependents': [dependents], 
                 'Credit_Score': [credit_score],
-                'No._of_Defaults': [0 if num_of_defaults == "None" else 1], 
+                'History_of_Defaults': [num_of_defaults], 
                 'Has_Active_Credit_Card': [has_credit_card],
                 'Property_Age': [property_age], 
                 'Property_Type': [prop_type[property_type] if property_type in prop_type else None], 
@@ -190,43 +183,45 @@ def single_predict():
                 'Property_Price': [property_price]
             })
 
-        # st.markdown("<h3>Overview of input:</h3>", unsafe_allow_html=True)
-        # st.dataframe(features_df)
-        data = {
-        'Customer ID': [customer_id],
-        'Name': [name],
-        'Gender': [gender[0]],
-        'Age': [age],
-        'Income (USD)': [income],
-        'Income Stability': [income_stability],
-        'Profession': [profession],
-        'Type of Employment': [type_of_employment],
-        'Location': [location],
-        'Loan Amount Request (USD)': [loan_amount_request],
-        'Current Loan Expenses (USD)': [current_loan_expenses],
-        'Expense Type 1': [expense_t1[0]],
-        'Expense Type 2': [expense_t2[0]],
-        'Dependents': [dependents],
-        'Credit Score': [credit_score],
-        'No. of Defaults': [0 if num_of_defaults == "None" else 1],
-        'Has Active Credit Card': [has_credit_card],
-        'Property Age': [property_age],
-        'Property Type': [prop_type[property_type] if property_type in prop_type else None],
-        'Property Location': [property_location],
-        'Co-Applicant': [0 if co_applicant == "None" else 1],
-        'Property Price': [property_price]
-        }
+
 
         st.markdown("<h3></h3>", unsafe_allow_html=True)
-        prediction = predict_new(data)[0][0]
-        # st.write("The customer can loan a maximum amount of: :green[$] ", prediction)
-        # Assuming 'prediction' contains the predicted loan amount
-        # st.markdown(f'<p style="font-size:24px">The customer can loan a maximum amount of: <p style="font-size:24px; color:green;"> $ {prediction:.2f}</p>', unsafe_allow_html=True)
-        # Assuming 'prediction' contains the predicted loan amount
-        st.markdown(f'<div style="border: 2px solid green; padding: 10px; border-radius: 10px; text-align: center;"> \
-                <p style="font-size:20px">The customer can loan a maximum amount of:</p> \
-                <p style="font-size:30px; color:green; font-weight: bold;"> $ {prediction:.2f}</p> \
-            </div>', unsafe_allow_html=True)
+
+        #Display only the prediction amount if there is no missing fields
+        if len(missing_fields) == 0:
+            data = {
+                'Customer ID': [customer_id],
+                'Name': [name],
+                'Gender': [gender[0]],
+                'Age': [age],
+                'Income (USD)': [income],
+                'Income Stability': [income_stability],
+                'Profession': [profession],
+                'Type of Employment': [type_of_employment],
+                'Location': [location],
+                'Loan Amount Request (USD)': [loan_amount_request],
+                'Current Loan Expenses (USD)': [current_loan_expenses],
+                'Expense Type 1': [expense_t1[0]],
+                'Expense Type 2': [expense_t2[0]],
+                'Dependents': [dependents],
+                'Credit Score': [credit_score],
+                'No. of Defaults': [0 if num_of_defaults == "None" else 1],
+                'Has Active Credit Card': [has_credit_card],
+                'Property Age': [property_age],
+                'Property Type': [prop_type[property_type] if property_type in prop_type else None],
+                'Property Location': [property_location],
+                'Co-Applicant': [0 if co_applicant == "None" else 1],
+                'Property Price': [property_price]
+                }
+            prediction = predict_new(data)[0][0]
+            # st.write("The customer can loan a maximum amount of: :green[$] ", prediction)
+            # Assuming 'prediction' contains the predicted loan amount
+            # st.markdown(f'<p style="font-size:24px">The customer can loan a maximum amount of: <p style="font-size:24px; color:green;"> $ {prediction:.2f}</p>', unsafe_allow_html=True)
+            # Assuming 'prediction' contains the predicted loan amount
+            st.markdown(f'<div style="border: 2px solid green; padding: 10px; border-radius: 10px; text-align: center;"> \
+                    <p style="font-size:20px">The customer can loan a maximum amount of:</p> \
+                    <p style="font-size:30px; color:green; font-weight: bold;"> $ {prediction:.2f}</p> \
+                </div>', unsafe_allow_html=True)
 
 
 
@@ -262,9 +257,13 @@ def batch_predict():
 
         data = pd.read_csv(uploaded_file)
         predictions = predict_new(data.to_dict('list'))
-        predictions_df = pd.DataFrame(predictions, columns=["Loan Sanction Amount (USD)"])
+
+        predictions_df = pd.DataFrame(predictions, columns=["Maximum Loan Amount ($)"])
         prediction_and_x_values_df = pd.concat([predictions_df, data], axis=1)
 
+        prediction_and_x_values_df["Maximum Loan Amount ($)"] = prediction_and_x_values_df["Maximum Loan Amount ($)"].round(2).apply(lambda x: '$ {:,.2f}'.format(x))
+
+        print(prediction_and_x_values_df.round(1))
         st.write(prediction_and_x_values_df)
 
         
@@ -274,9 +273,13 @@ def main():
     st.set_page_config(page_title="Bank Loan Amount Prediction App", layout="wide")
 
     
-    image = Image.open('Loan_Photo.jpg')
-    st.image(image)
+    # image = Image.open('Loan_Photo.jpg')
+    # st.image(image)
+    video_file = open("Loan_video.mp4", "rb").read()
+    video_encoded = base64.b64encode(video_file).decode('utf-8')
+    video_tag = f'<video width="100%" controls autoplay loop muted src="data:video/mp4;base64,{video_encoded}" type="video/mp4"></video>'
 
+    st.markdown(video_tag, unsafe_allow_html=True)
 
     # Hide the Streamlit menu
     hide_menu_style = """
@@ -288,25 +291,13 @@ def main():
     st.markdown(hide_menu_style, unsafe_allow_html=True)
 
     # Add a sidebar
-    st.sidebar.title("Choose Input Type")
+    st.sidebar.title("Choose Prediction Mode")
     option = st.sidebar.selectbox(
-        "Select Input Type", ("Single Predict", "Batch Predict"), index=None, placeholder="Select Prediction Type..."
+        "Select Prediction Type", ("Single Predict", "Batch Predict"), index=None, placeholder="Select Prediction Type..."
     )
 
     st.sidebar.write(f'You selected: :green[{option}]')
     st.sidebar.markdown("<h3></h3>", unsafe_allow_html=True)
-
-    # Add background image CSS
-    bg_image_path = '/streamlit/icon.jpg'  # Replace with the actual path to your image
-    bg_css = f"""
-        <style>
-            body {{
-                background-image: url('{bg_image_path}');
-                background-size: cover;
-            }}
-        </style>
-    """
-    st.markdown(bg_css, unsafe_allow_html=True)
 
     # Display content based on the selected option
     if option == 'Single Predict':
