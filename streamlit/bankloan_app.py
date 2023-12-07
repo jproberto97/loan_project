@@ -224,7 +224,25 @@ def single_predict():
                 </div>', unsafe_allow_html=True)
 
 
+data_guide_string = """BANK LOAN PREDICTION DATA GUIDE
 
+Listed below are the allowable values and data conditions for each column.
+
+Gender - 'F', 'M'
+Age - should be an integer from 18 to 100
+Income Stability - 'Low', 'High'
+Profession - 'Working', 'Pensioner', 'State servant', 'Commercial associate', 'Unemployed', 'Student', 'Businessman', 'Maternity leave'
+Type of Employment - 'Sales staff', 'High skill tech staff', 'Secretaries', 'Laborers', 'Managers', 'Cooking staff', 'Core staff', 'Drivers', 'Realty agents', 'Security staff', 'Accountants', 'Private service staff', 'Waiters/barmen staff', 'Medicine staff', 'Cleaning staff', 'Low-skill Laborers', 'HR staff', 'IT staff'
+Work Location - 'Semi-Urban', 'Rural', 'Urban'
+Expense Type 1(include Loan Payments and Insurance) - 'N', 'Y'
+Expense Type 2(include Travel and Subscription Services) - 'N', 'Y'
+Credit Score - value should be from 300 to 900
+History of defaults - '0', '1'
+Credit Card Status - 'Unpossessed', 'Active', 'Inactive'
+Property Type - 'Land', 'Residential', 'Commercial', 'Industrial'
+Property Location - 'Rural', 'Urban', 'Semi-Urban'
+Number of Co-applicants - '0', '1'
+"""
 
 def batch_predict():
     st.title("Bank Loan Amount Prediction App - Batch Predict")
@@ -232,12 +250,19 @@ def batch_predict():
 
     # Download the csv file containing the prediction
     template = pd.read_csv('streamlit/template/customer_template.csv')
+    
 
     get_template = st.download_button(
         label="Get template",
         file_name="customer_loan_application_template.csv",
         data=template.to_csv(index=None),
         mime="text/csv",
+    )
+
+    get_data_guide = st.download_button(
+        label="Get data guide",
+        file_name="Data Guide.txt",
+        data=data_guide_string,
     )
 
     uploaded_file = st.file_uploader(
@@ -247,24 +272,27 @@ def batch_predict():
 
     #a file is uploaded
     if uploaded_file is not None:
-        
-        #add code that validates if file submitted is csv
-        st.markdown("<h3></h3>", unsafe_allow_html=True)
-        st.markdown(f'<div style="border: 2px solid green; padding: 10px; border-radius: 10px; text-align: center;"> \
-                <p style="font-size:20px">Check the initial column for the maximum loan amount.</p> \
-            </div>', unsafe_allow_html=True)
-        st.markdown("<h3></h3>", unsafe_allow_html=True)
+        try:
+            #add code that validates if file submitted is csv
+    
+            data = pd.read_csv(uploaded_file)
+            predictions = predict_new(data.to_dict('list'))
 
-        data = pd.read_csv(uploaded_file)
-        predictions = predict_new(data.to_dict('list'))
+            predictions_df = pd.DataFrame(predictions, columns=["Maximum Loan Amount ($)"])
+            prediction_and_x_values_df = pd.concat([predictions_df, data], axis=1)
 
-        predictions_df = pd.DataFrame(predictions, columns=["Maximum Loan Amount ($)"])
-        prediction_and_x_values_df = pd.concat([predictions_df, data], axis=1)
+            prediction_and_x_values_df["Maximum Loan Amount ($)"] = prediction_and_x_values_df["Maximum Loan Amount ($)"].round(2).apply(lambda x: '$ {:,.2f}'.format(x))
 
-        prediction_and_x_values_df["Maximum Loan Amount ($)"] = prediction_and_x_values_df["Maximum Loan Amount ($)"].round(2).apply(lambda x: '$ {:,.2f}'.format(x))
+            st.markdown("<h3></h3>", unsafe_allow_html=True)
+            st.markdown(f'<div style="border: 2px solid green; padding: 10px; border-radius: 10px; text-align: center;"> \
+                    <p style="font-size:20px">Check the initial column for the maximum loan amount.</p> \
+                </div>', unsafe_allow_html=True)
+            st.markdown("<h3></h3>", unsafe_allow_html=True)
 
-        print(prediction_and_x_values_df.round(1))
-        st.write(prediction_and_x_values_df)
+            # print(prediction_and_x_values_df.round(1))
+            st.write(prediction_and_x_values_df)
+        except:
+            st.write("Wrong file uploaded. Make sure to follow the template and data guide then upload the .csv file.")
 
         
 
